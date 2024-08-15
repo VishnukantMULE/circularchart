@@ -8,76 +8,65 @@ import 'package:get/get.dart';
 import '../model/pie_chart_data.dart';
 
 class _PainterData {
-  const _PainterData(this.paint, this.radians, this.decrease);
+  const _PainterData(this.paint, this.radians, this.decreaseInPercent);
 
   final Paint paint;
   final double radians;
-  final double decrease;
+  final double decreaseInPercent;
 }
 
 class ChartPainter extends CustomPainter {
   ChartPainter(double strokeWidth, List<PieChartData> data, double val) {
-    // convert chart data to painter data
-    dataList = data
-        .map((e) => _PainterData(
-              Paint()
-                ..color = e.color
-                ..style = PaintingStyle.stroke
-                ..strokeWidth = strokeWidth
-                ..strokeCap = StrokeCap.round,
-              (e.percent.value - _padding) * _percentInRadians,
-              e.decrease.value,
-            ))
-        .toList();
+    dataList = data.map((e) {
+      final double totalRadians = (e.percent.value-_padding) * _percentInRadians;
+      final double decreaseInRadians = (e.decrease.value / 100) * totalRadians;
+
+      return _PainterData(
+        Paint()
+          ..color = e.color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth
+          ..strokeCap = StrokeCap.round,
+        totalRadians,
+        decreaseInRadians,
+      );
+    }).toList();
   }
 
-  static const _percentInRadians = 0.062831853071796;
-  // this is the gap between strokes in percent
+  static const _percentInRadians = 0.062831853071796; // (2 * pi) / 360
   static const _padding = 4;
-  static const _paddingInRadians = _percentInRadians * _padding;
-  // 0 radians is to the right, but since we want to start from the top
-  // we'll use -90 degrees in radians
+
+  static const _paddingInRadians = _percentInRadians * _padding; // Padding between slices
   static const _startAngle = -1.570796 + _paddingInRadians / 25;
-  var controller = Get.find<ChartController>();
 
   late final List<_PainterData> dataList;
+
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     double startAngle = _startAngle;
 
     for (final data in dataList) {
-      final path = Path()..addArc(rect, startAngle, data.radians);
-      var startAngle2 = startAngle + data.decrease;
-      var radians = data.radians - data.decrease;
-      if (radians < 0) {
-        radians = 0;
-      }
-
-      startAngle += data.radians + _paddingInRadians;
+      final path = Path()..addArc(rect, startAngle, data.radians - data.decreaseInPercent);
+      final endAngle = startAngle + (data.radians - data.decreaseInPercent);
 
       canvas.drawPath(path, data.paint);
-      final paint2 = Paint()
+
+      final Paint decreasePaint = Paint()
         ..color = Colors.yellow
         ..strokeWidth = data.paint.strokeWidth - 5
         ..strokeCap = StrokeCap.round
         ..style = PaintingStyle.stroke;
 
-      final path2 = Path()..addArc(rect, startAngle2, radians);
-      startAngle2 += radians + _paddingInRadians;
-      canvas.drawPath(path2, paint2);
+      final Path decreasePath = Path()..addArc(rect, endAngle, data.decreaseInPercent);
+      canvas.drawPath(decreasePath, decreasePaint);
 
-      // canvas.drawArc(
-      //     rect, startAngle2 + 0.2, data.radians - 0.2, false, paint2);
-      // canvas.drawCircle(Offset(150, 20), 180, data.paint);
+      startAngle += data.radians + _paddingInRadians;
     }
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    // TODO: implement shouldRepaint
     return true;
-    // return oldDelegate != this;
-    // throw UnimplementedError();
   }
 }
