@@ -67,8 +67,8 @@ class ChartPainter extends CustomPainter {
 
 
 
-      const double dashWidth = 0.5;
-      const double dashSpace = 18.0; 
+       final double dashWidth = data.paint.strokeWidth*0.004;
+       final double dashSpace = data.paint.strokeWidth*0.99;
 
 
 
@@ -76,13 +76,28 @@ class ChartPainter extends CustomPainter {
 
 
       if (i == 2) {
-        final Paint dottedRed = Paint()
-          ..color = Colors.red
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 29
-          ..strokeCap = StrokeCap.round;
+        if(dataList[i].isSecondary==true)
+          {
+            final Paint dottedRed = Paint()
+              ..color = dataList[i].sbColor
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = data.paint.strokeWidth- (data.paint.strokeWidth*0.04)
+              ..strokeCap = StrokeCap.round;
 
-        _drawDottedArc(canvas, outerPath, dottedRed, dashWidth, dashSpace);
+            _drawDottedArc(canvas, outerPath, dottedRed, dashWidth, dashSpace);
+
+          }
+        else
+          {
+            final Paint border = Paint()
+              ..color = dataList[i].pbColor
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = data.paint.strokeWidth- (data.paint.strokeWidth*0.04)
+              ..strokeCap = StrokeCap.round;
+            canvas.drawPath(outerPath, border);
+
+          }
+
       } else {
         canvas.drawPath(outerPath, data.paint);
       }
@@ -139,12 +154,12 @@ class ChartPainter extends CustomPainter {
       final obPaint = Paint()
         ..color = Colors.black12
         ..style = PaintingStyle.stroke
-        ..strokeWidth = data.paint.strokeWidth - 29.5;
+        ..strokeWidth = data.paint.strokeWidth - (data.paint.strokeWidth*0.97);
 
       final obCompletePaint = Paint()
         ..color = Colors.black12
         ..style = PaintingStyle.stroke
-        ..strokeWidth = data.paint.strokeWidth - 29.8;
+        ..strokeWidth = data.paint.strokeWidth - (data.paint.strokeWidth*0.97);
 
       final obRect = rect.inflate(data.paint.strokeWidth);
       final obCompleteRect = rect.inflate(data.paint.strokeWidth);
@@ -163,12 +178,12 @@ class ChartPainter extends CustomPainter {
       final ibPaint = Paint()
         ..color = Colors.black12
         ..style = PaintingStyle.stroke
-        ..strokeWidth = data.paint.strokeWidth - 29.5;
+        ..strokeWidth = data.paint.strokeWidth - (data.paint.strokeWidth*0.95);
 
       final ibCompletePaint = Paint()
         ..color = Colors.black12
         ..style = PaintingStyle.stroke
-        ..strokeWidth = data.paint.strokeWidth - 29.8;
+        ..strokeWidth = data.paint.strokeWidth - (data.paint.strokeWidth*0.97);
 
       final ibRect = rect.deflate(data.paint.strokeWidth);
       final ibCompleteRect = rect.deflate(data.paint.strokeWidth);

@@ -11,7 +11,7 @@ class ChartController extends GetxController {
   var data = <PieChartData>[
     PieChartData(Colors.yellow, 20.0, 0.0,Colors.yellow,Colors.yellow,false),
     PieChartData(Colors.orange, 10.0, 0.0,Colors.orange,Colors.orange,false),
-    PieChartData(Colors.blueAccent, 70.0, 0.0,Colors.green,Colors.red,false),
+    PieChartData(Colors.blueAccent, 70.0, 0.0,Colors.green,Colors.red,true),
   ].obs;
 
 
