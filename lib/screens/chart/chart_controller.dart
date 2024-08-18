@@ -9,9 +9,9 @@ class ChartController extends GetxController {
   RxDouble val = 0.0.obs;
 
   var data = <PieChartData>[
-    PieChartData(Colors.yellow, 20.0, 0.0),
-    PieChartData(Colors.orange, 10.0, 0.0),
-    PieChartData(Colors.green, 70.0, 0.0),
+    PieChartData(Colors.yellow, 20.0, 0.0,Colors.yellow,Colors.yellow,false),
+    PieChartData(Colors.orange, 10.0, 0.0,Colors.orange,Colors.orange,false),
+    PieChartData(Colors.blueAccent, 70.0, 0.0,Colors.green,Colors.red,false),
   ].obs;
 
 

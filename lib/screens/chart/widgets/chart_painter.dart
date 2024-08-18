@@ -1,23 +1,21 @@
+import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../model/pie_chart_data.dart';
 
-///  ib = inner border
-///  ob = outer border
-///  ibComplete = inner border complete 100%
-///  obComplete = outer border complete 100%
-
 class PainterData {
-  const PainterData(this.paint, this.radians, this.fillPercentages);
+  const PainterData(this.paint, this.radians, this.fillPercentages,this.pbColor,this.sbColor,this.isSecondary);
 
   final Paint paint;
   final double radians;
   final double fillPercentages;
+  final Color pbColor;
+  final Color sbColor;
+  final bool isSecondary;
+
 }
 
-
-
 class ChartPainter extends CustomPainter {
-
   ChartPainter(double strokeWidth, List<PieChartData> data, double val) {
     dataList = data.map((e) {
       final double totalRadians =
@@ -32,6 +30,10 @@ class ChartPainter extends CustomPainter {
           ..strokeCap = StrokeCap.round,
         totalRadians,
         fillInRadians,
+        e.pbColor.value,
+        e.sbColor.value,
+        e.isSecondary.value
+
       );
     }).toList();
   }
@@ -48,49 +50,92 @@ class ChartPainter extends CustomPainter {
     final rect = Offset.zero & size;
     double startAngle = _startAngle;
 
-    for (final data in dataList) {
+    for (int i = 0; i < dataList.length; i++) {
+      final data = dataList[i];
+      final double totalRadians = data.radians;
+      final double fillInRadians = data.fillPercentages;
+      double arcLength = 0.0;
+      if (i == 0) {
+        arcLength = totalRadians;
+      } else {
+        arcLength = totalRadians - fillInRadians;
+      }
 
-      final outerPath = Path()
-        ..addArc(rect, startAngle, data.radians - data.fillPercentages);
-      final endAngle = startAngle + (data.radians - data.fillPercentages);
-      canvas.drawPath(outerPath, data.paint);
+      final Path outerPath = Path()..addArc(rect, startAngle, arcLength);
 
 
 
 
-      /// white Arc for Add Border Effect
-      /// arcBorder -
-      const double arcBorder=5.0;
+
+      const double dashWidth = 0.5;
+      const double dashSpace = 18.0; 
+
+
+
+
+
+
+      if (i == 2) {
+        final Paint dottedRed = Paint()
+          ..color = Colors.red
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 29
+          ..strokeCap = StrokeCap.round;
+
+        _drawDottedArc(canvas, outerPath, dottedRed, dashWidth, dashSpace);
+      } else {
+        canvas.drawPath(outerPath, data.paint);
+      }
+
+      final double endAngle = startAngle + arcLength;
+
+
+
+
+      // White Arc for Add Border Effect
+      const double arcBorder = 5.0;
       final whitePaint = Paint()
         ..color = Colors.white
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
         ..strokeWidth = data.paint.strokeWidth - arcBorder;
-      final whitePath = Path()..addArc(rect, startAngle, data.radians);
+      final whitePath = Path()..addArc(rect, startAngle, totalRadians);
       canvas.drawPath(whitePath, whitePaint);
-      startAngle = startAngle + data.radians + _paddingInRadians;
-
-
-
-
-      /// Fill by Color ex- fill 10% ,20% that Stroke by that Stroke color
-
-      final fillPaint = Paint()
-        ..color = data.paint.color
-        ..strokeWidth = data.paint.strokeWidth
-        ..strokeCap = StrokeCap.round
-        ..style = PaintingStyle.stroke;
-
-      final fillPath = Path()
-        ..addArc(rect, endAngle, data.fillPercentages);
-      canvas.drawPath(fillPath, fillPaint);
 
 
 
 
 
-      /// Outer Border ///
 
+
+      // Fill by Color ex- fill 10% ,20% that Stroke by that Stroke color
+      if (i == 0) {
+        final fillPaint = Paint()
+          ..color = Colors.yellow
+          ..strokeWidth = data.paint.strokeWidth
+          ..strokeCap = StrokeCap.round
+          ..style = PaintingStyle.stroke;
+
+        final fillPath = Path()..addArc(rect, startAngle, fillInRadians);
+        canvas.drawPath(fillPath, fillPaint);
+        startAngle = startAngle + totalRadians + _paddingInRadians;
+      } else {
+        final fillPaint = Paint()
+          ..color = data.paint.color
+          ..strokeWidth = data.paint.strokeWidth
+          ..strokeCap = StrokeCap.round
+          ..style = PaintingStyle.stroke;
+
+        final fillPath = Path()..addArc(rect, endAngle, fillInRadians);
+        canvas.drawPath(fillPath, fillPaint);
+        startAngle = startAngle + totalRadians + _paddingInRadians;
+      }
+
+
+
+
+
+      // Outer Border
       final obPaint = Paint()
         ..color = Colors.black12
         ..style = PaintingStyle.stroke
@@ -112,8 +157,9 @@ class ChartPainter extends CustomPainter {
 
 
 
-      /// Inner Border ///
 
+
+      // Inner Border
       final ibPaint = Paint()
         ..color = Colors.black12
         ..style = PaintingStyle.stroke
@@ -132,8 +178,54 @@ class ChartPainter extends CustomPainter {
 
       canvas.drawPath(ibCompletePath, ibCompletePaint);
       canvas.drawPath(ibPath, ibPaint);
-
     }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  void _drawDottedArc(Canvas canvas, Path path, Paint paint, double dashWidth,
+      double dashSpace) {
+    final PathMetrics pathMetrics = path.computeMetrics();
+    final Path dashPath = Path();
+    final Paint dashPaint = Paint()
+      ..color = paint.color
+      ..style = paint.style
+      ..strokeWidth = paint.strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    for (final pathMetric in pathMetrics) {
+      final double length = pathMetric.length;
+      double distance = 0.0;
+
+      while (distance < length) {
+        final double start = distance;
+        final double end = min(distance + dashWidth, length);
+        final Path segment = pathMetric.extractPath(start, end);
+
+        dashPath.addPath(segment, Offset.zero);
+        distance += dashWidth + dashSpace;
+      }
+    }
+
+    canvas.drawPath(dashPath, dashPaint);
   }
 
   @override
